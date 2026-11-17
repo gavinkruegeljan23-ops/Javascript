@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urban City Living - Responsive Design</title>
+    <!-- jQuery & jQuery UI (Required for Drag-and-Drop Sorting) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
     <style>
         /* Base Styles (Desktop and Larger Screens) */
         body {
@@ -82,12 +85,18 @@
             margin-top: 30px;
             margin-bottom: 30px;
         }
-        /* Ranked Boxes Layout (Top 3: #1 on top, #2 & #3 on bottom) */
-        .ranking-container {
+        .drag-hint {
+            font-style: italic;
+            color: #666666;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+        /* Sortable Ranked Boxes Layout */
+        #sortable-ranks {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-top: 30px;
+            gap: 18px;
+            margin-top: 15px;
         }
         .rank-card {
             background-color: #ffffff;
@@ -96,35 +105,51 @@
             border-radius: 6px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease;
+            cursor: grab;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            user-select: none;
         }
         .rank-card:hover {
-            transform: translateY(-3px);
+            box-shadow: 0 4px 14px rgba(224, 51, 255, 0.25);
         }
-        .rank-card.top-box {
+        .rank-card:active {
+            cursor: grabbing;
+        }
+        /* First item gets the Top #1 highlight styling automatically */
+        #sortable-ranks .rank-card:first-child {
             background: linear-gradient(135deg, #ffffff 0px, #fdf8ff 100%);
             border-top: 2px solid #E033FF;
         }
-        .bottom-boxes-row {
+        .card-header {
             display: flex;
-            gap: 20px;
-        }
-        .bottom-boxes-row .rank-card {
-            flex: 1;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
         .rank-number {
             display: inline-block;
             background-color: #E033FF;
             color: #ffffff;
             font-weight: bold;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 4px;
             font-size: 0.9rem;
-            margin-bottom: 10px;
+        }
+        .drag-handle {
+            color: #888888;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
         .rank-card h3 {
             margin-top: 0;
             color: #2c3e50;
+        }
+        /* Dashed placeholder outline while dragging */
+        .drag-placeholder {
+            border: 2px dashed #E033FF;
+            background-color: rgba(224, 51, 255, 0.08);
+            border-radius: 6px;
+            height: 120px;
         }
         /* High Contrast Mode Overrides */
         body.high-contrast {
@@ -137,12 +162,8 @@
         body.high-contrast h2, body.high-contrast h3 {
             color: #ffff00 !important;
         }
-        body.high-contrast .subtitle {
+        body.high-contrast .subtitle, body.high-contrast .drag-hint {
             color: #cccccc !important;
-        }
-        body.high-contrast a {
-            color: #ffff00 !important;
-            text-shadow: 0 0 5px #E033FF;
         }
         body.high-contrast button {
             background-color: #ffff00;
@@ -154,23 +175,18 @@
             border-color: #ffff00;
         }
         body.high-contrast .rank-card {
-            background-color: #1a1a1a !important;
+            background: #1a1a1a !important;
             border-color: #444 !important;
             border-left-color: #ffff00 !important;
             color: #ffffff !important;
-        }
-        body.high-contrast .rank-card h3 {
-            color: #ffff00 !important;
         }
         body.high-contrast .rank-number {
             background-color: #ffff00;
             color: #000000;
         }
-        /* Responsive design for smaller screens */
-        @media (max-width: 768px) {
-            .bottom-boxes-row {
-                flex-direction: column;
-            }
+        body.high-contrast .drag-placeholder {
+            border-color: #ffff00;
+            background-color: rgba(255, 255, 0, 0.1);
         }
     </style>
 </head>
@@ -190,34 +206,56 @@
     </div>
     <!-- Image Placed Underneath the Text -->
     <img src="IMG_0124.jpeg" alt="Moon and clouds" class="story-image">
-    <!-- Ranked Boxes: Top 3 Best Parts of Visiting Cities (#1 on top, #2 and #3 on bottom) -->
+    <!-- Interactive Draggable Ranked Boxes -->
     <div class="content-section">
         <h2>Top 3 Best Parts of Visiting Cities</h2>
-        <div class="ranking-container">
-            <!-- Box 1 (Top) -->
-            <div class="rank-card top-box">
-                <span class="rank-number">Rank #1</span>
+        <p class="drag-hint">Click and drag any box up or down to change its ranking order:</p>
+        <div id="sortable-ranks">
+            <!-- Box 1 -->
+            <div class="rank-card">
+                <div class="card-header">
+                    <span class="rank-number">Rank #1</span>
+                    <span class="drag-handle">&#9776; Drag to Reorder</span>
+                </div>
                 <h3>Architectural Diversity & Historic Landmarks</h3>
                 <p>Standing between centuries-old cathedrals and towering modern glass skyscrapers captures the true evolution of human culture and design.</p>
             </div>
-            <!-- Bottom Row for Box 2 and Box 3 -->
-            <div class="bottom-boxes-row">
-                <div class="rank-card">
+            <!-- Box 2 -->
+            <div class="rank-card">
+                <div class="card-header">
                     <span class="rank-number">Rank #2</span>
-                    <h3>Local Food Culture & Street Markets</h3>
-                    <p>Tasting authentic regional dishes and exploring bustling local food districts gives you an immediate window into the community's heart and soul.</p>
+                    <span class="drag-handle">&#9776; Drag to Reorder</span>
                 </div>
-                <div class="rank-card">
+                <h3>Local Food Culture & Street Markets</h3>
+                <p>Tasting authentic regional dishes and exploring bustling local food districts gives you an immediate window into the community's heart and soul.</p>
+            </div>
+            <!-- Box 3 -->
+            <div class="rank-card">
+                <div class="card-header">
                     <span class="rank-number">Rank #3</span>
-                    <h3>Vibrant Street Life & Public Spaces</h3>
-                    <p>People-watching in lively plazas, parks, and busy pedestrian avenues reveals the pulse, energy, and daily rhythm of urban residents.</p>
+                    <span class="drag-handle">&#9776; Drag to Reorder</span>
                 </div>
+                <h3>Vibrant Street Life & Public Spaces</h3>
+                <p>People-watching in lively plazas, parks, and busy pedestrian avenues reveals the pulse, energy, and daily rhythm of urban residents.</p>
             </div>
         </div>
     </div>
-    <!-- JavaScript Implementation -->
+    <!-- JavaScript & jQuery Implementation -->
     <script>
-        // 1. High Contrast Mode Toggle
+        // 1. jQuery UI Sortable Drag-and-Drop Ranking
+        $(document).ready(function() {
+            $("#sortable-ranks").sortable({
+                placeholder: "drag-placeholder",
+                cursor: "grabbing",
+                update: function(event, ui) {
+                    // Automatically updates Rank #1, #2, #3 numbers after dropping
+                    $("#sortable-ranks .rank-card").each(function(index) {
+                        $(this).find(".rank-number").text("Rank #" + (index + 1));
+                    });
+                }
+            });
+        });
+        // 2. High Contrast Mode Toggle
         function toggleContrast() {
             document.body.classList.toggle("high-contrast");
             const contrastBtn = document.getElementById("contrast-btn");
@@ -227,11 +265,10 @@
                 contrastBtn.textContent = "High Contrast";
             }
         }
-        // 2. Font Size Increaser (Accessibility)
-        let currentFontSize = 16; // Matches your 16px base body font-size
+        // 3. Font Size Increaser (Accessibility)
+        let currentFontSize = 16;
         function increaseFontSize() {
-            currentFontSize += 2; // Steps up by 2px per click
-            // Resets back to 16px after hitting max limit (22px)
+            currentFontSize += 2;
             if (currentFontSize > 22) {
                 currentFontSize = 16;
             }
@@ -243,7 +280,7 @@
                 fontBtn.textContent = "Text Size: " + currentFontSize + "px";
             }
         }
-        // 3. Print Page Function
+        // 4. Print Page Function
         function printPage() {
             window.print();
         }
